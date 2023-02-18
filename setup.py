@@ -15,11 +15,19 @@ setup(
     author = "John Lukach",
     author_email = "hello@lukach.io",
     license = "Apache-2.0",
-    packages = ["getblocks"],
-    install_requires = ["aiofile"],
+    packages = [
+        "getblocks"
+    ],
+    install_requires = [
+        "aiofile",
+        "blake3",
+        "requests"
+    ],
     zip_safe = False,
     entry_points = {
-        "console_scripts": ["getblocks=getblocks.cli:main"],
+        "console_scripts": [
+            "getblocks=getblocks.cli:main"
+        ],
     },
     python_requires = ">=3.7",
 )

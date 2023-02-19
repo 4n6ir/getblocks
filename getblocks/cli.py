@@ -182,7 +182,7 @@ async def start():
         async with async_open(amiid+'.txt', 'w+') as f:
             await f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name\n')
             await b.write('ami|b3|size|entropy|block|offset\n')
-            root = PurePath(Path.cwd())#.anchor
+            root = PurePath(Path.cwd()).anchor
             path = Path(root)
             for p in Path(path).glob('*'):
                 if str(p) != '/proc':

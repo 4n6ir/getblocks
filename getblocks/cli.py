@@ -174,30 +174,6 @@ async def parser(p):
             str(b3_name)+'\n'
         return value
 
-async def sector(b,p,ami,size,b3):
-    if p.is_file() == True:
-        block = 512
-        count = 0
-        location = 1
-        ifile = open(p,'rb')
-        while count <= size:
-            ifile.seek(count)
-            entropy_value = 0
-            bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
-            for base in bases:
-                n_i = bases[base]
-                p_i = n_i / float(block)
-                entropy_i = p_i * (math.log(p_i, 2))
-                entropy_value += entropy_i
-            entropy = entropy_value * -1
-            ifile.seek(count)
-            b3block =  blake3(ifile.read(block)).hexdigest().upper()
-            if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
-                b3block = 'EMPTY'
-            await b.write(ami+'|'+b3+'|'+str(size)+'|'+str(entropy)+'|'+b3block+'|'+str(location)+'\n')
-            count = count + 512
-            location = location + 1
-
 async def start():
     print('--------------------------------')
     print('GETBLOCKS v'+__version__)
@@ -206,7 +182,7 @@ async def start():
         async with async_open(amiid+'.txt', 'w+') as f:
             await f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name\n')
             await b.write('ami|b3|size|entropy|block|offset\n')
-            root = PurePath(Path.cwd()).anchor
+            root = PurePath(Path.cwd())#.anchor
             path = Path(root)
             for p in Path(path).glob('*'):
                 if str(p) != '/proc':
@@ -216,7 +192,28 @@ async def start():
                             await f.write(value)
                             out = value.split('|')
                             if out[6] != 'EMPTY' and out[6] != 'LARGE' and out[6] != '-':
-                                await sector(b,p,out[0],int(out[3]),out[6])
+                                if p.is_file() == True:
+                                    block = 512
+                                    count = 0
+                                    location = 1
+                                    ifile = open(p,'rb')
+                                    while count <= int(out[3]):
+                                        ifile.seek(count)
+                                        entropy_value = 0
+                                        bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
+                                        for base in bases:
+                                            n_i = bases[base]
+                                            p_i = n_i / float(block)
+                                            entropy_i = p_i * (math.log(p_i, 2))
+                                            entropy_value += entropy_i
+                                        entropy = entropy_value * -1
+                                        ifile.seek(count)
+                                        b3block =  blake3(ifile.read(block)).hexdigest().upper()
+                                        if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
+                                            b3block = 'EMPTY'
+                                        await b.write(out[0]+'|'+out[6]+'|'+str(out[3])+'|'+str(entropy)+'|'+b3block+'|'+str(location)+'\n')
+                                        count = count + 512
+                                        location = location + 1
                     else:
                         for s in Path(p).rglob('*'):
                             value = await parser(s)
@@ -224,7 +221,28 @@ async def start():
                                 await f.write(value)
                                 out = value.split('|')
                                 if out[6] != 'EMPTY' and out[6] != 'LARGE' and out[6] != '-':
-                                    await sector(b,p,out[0],int(out[3]),out[6])
+                                    if p.is_file() == True:
+                                        block = 512
+                                        count = 0
+                                        location = 1
+                                        ifile = open(p,'rb')
+                                        while count <= int(out[3]):
+                                            ifile.seek(count)
+                                            entropy_value = 0
+                                            bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
+                                            for base in bases:
+                                                n_i = bases[base]
+                                                p_i = n_i / float(block)
+                                                entropy_i = p_i * (math.log(p_i, 2))
+                                                entropy_value += entropy_i
+                                            entropy = entropy_value * -1
+                                            ifile.seek(count)
+                                            b3block =  blake3(ifile.read(block)).hexdigest().upper()
+                                            if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
+                                                b3block = 'EMPTY'
+                                            await b.write(out[0]+'|'+out[6]+'|'+str(out[3])+'|'+str(entropy)+'|'+b3block+'|'+str(location)+'\n')
+                                            count = count + 512
+                                            location = location + 1
 
 def main():
     asyncio.run(start())

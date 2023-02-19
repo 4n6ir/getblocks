@@ -206,14 +206,15 @@ async def start():
                     if value != None:
                         await f.write(value)
                         out = value.split('|')
-                        count = 0
-                        location = 1
-                        while count <= int(out[3]):
-                            block = await sector(p,count)
-                            parse = block.split('|')
-                            await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
-                            count = count + 512
-                            location = location + 1
+                        if out[6] != 'LARGE' and out[6] != 'EMPTY' and out[6] != '-':
+                            count = 0
+                            location = 1
+                            while count <= int(out[3]):
+                                block = await sector(p,count)
+                                parse = block.split('|')
+                                await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                count = count + 512
+                                location = location + 1
                 else:
                     for s in Path(p).rglob('*'):
                         if s.is_file() == True:
@@ -221,14 +222,15 @@ async def start():
                             if value != None:
                                 await f.write(value)
                                 out = value.split('|')
-                                count = 0
-                                location = 1
-                                while count <= int(out[3]):
-                                    block = await sector(s,count)
-                                    parse = block.split('|')
-                                    await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
-                                    count = count + 512
-                                    location = location + 1
+                                if out[6] != 'LARGE' and out[6] != 'EMPTY' and out[6] != '-':
+                                    count = 0
+                                    location = 1
+                                    while count <= int(out[3]):
+                                        block = await sector(s,count)
+                                        parse = block.split('|')
+                                        await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                        count = count + 512
+                                        location = location + 1
 
 def main():
     asyncio.run(start())

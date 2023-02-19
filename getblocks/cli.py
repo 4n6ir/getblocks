@@ -118,140 +118,121 @@ async def parseonlypath(onlypath):
     return onlypath
 
 async def parser(p):
-    if p.is_file() == True:
-        try:
-            size =  p.stat().st_size		
-        except: 
-            size = 0
-            pass
-        if size == 0:
-            md5_file = 'EMPTY'
-            sha256_file = 'EMPTY'
-            b3_file = 'EMPTY'
-        elif size > 104857599:
-            md5_file = 'LARGE'
-            sha256_file = 'LARGE'
-            b3_file = 'LARGE'
-        else:
-            hashes = await hasher(str(p))
-            out = hashes.split('|')
-            md5_file = out[0]
-            sha256_file = out[1]
-            b3_file = out[2]
-        fullpath = await normalizepath(str(p))
-        meta = await matchmeta(fullpath)
-        out = meta.split('|')
-        md5_path = out[0]
-        sha256_path = out[1]
-        b3_path = out[2]
-        directory = await parseonlypath(fullpath)
-        meta = await matchmeta(directory)
-        out = meta.split('|')
-        md5_dir = out[0]
-        sha256_dir = out[1]
-        b3_dir = out[2]
-        filename = await parsefilename(fullpath)
-        meta = await matchmeta(filename)
-        out = meta.split('|')
-        md5_name = out[0]
-        sha256_name = out[1]
-        b3_name = out[2]
-        value = str(amiid)+'|'+ \
-            str(fullpath)+'|'+ \
-            str(filename)+'|'+ \
-            str(size)+'|'+ \
-            str(md5_file)+'|'+ \
-            str(sha256_file)+'|'+ \
-            str(b3_file)+'|'+ \
-            str(md5_path)+'|'+ \
-            str(sha256_path)+'|'+ \
-            str(b3_path)+'|'+ \
-            str(md5_dir)+'|'+ \
-            str(sha256_dir)+'|'+ \
-            str(b3_dir)+'|'+ \
-            str(md5_name)+'|'+ \
-            str(sha256_name)+'|'+ \
-            str(b3_name)+'\n'
-        return value
+    try:
+        size =  p.stat().st_size		
+    except: 
+        size = 0
+        pass
+    if size == 0:
+        md5_file = 'EMPTY'
+        sha256_file = 'EMPTY'
+        b3_file = 'EMPTY'
+    elif size > 104857599:
+        md5_file = 'LARGE'
+        sha256_file = 'LARGE'
+        b3_file = 'LARGE'
+    else:
+        hashes = await hasher(str(p))
+        out = hashes.split('|')
+        md5_file = out[0]
+        sha256_file = out[1]
+        b3_file = out[2]
+    fullpath = await normalizepath(str(p))
+    meta = await matchmeta(fullpath)
+    out = meta.split('|')
+    md5_path = out[0]
+    sha256_path = out[1]
+    b3_path = out[2]
+    directory = await parseonlypath(fullpath)
+    meta = await matchmeta(directory)
+    out = meta.split('|')
+    md5_dir = out[0]
+    sha256_dir = out[1]
+    b3_dir = out[2]
+    filename = await parsefilename(fullpath)
+    meta = await matchmeta(filename)
+    out = meta.split('|')
+    md5_name = out[0]
+    sha256_name = out[1]
+    b3_name = out[2]
+    value = str(amiid)+'|'+ \
+        str(fullpath)+'|'+ \
+        str(filename)+'|'+ \
+        str(size)+'|'+ \
+        str(md5_file)+'|'+ \
+        str(sha256_file)+'|'+ \
+        str(b3_file)+'|'+ \
+        str(md5_path)+'|'+ \
+        str(sha256_path)+'|'+ \
+        str(b3_path)+'|'+ \
+        str(md5_dir)+'|'+ \
+        str(sha256_dir)+'|'+ \
+        str(b3_dir)+'|'+ \
+        str(md5_name)+'|'+ \
+        str(sha256_name)+'|'+ \
+        str(b3_name)+'|FILE|-|-|-\n'
+    return value
+
+async def sector(p,count):
+    block = 512
+    ifile = open(p,'rb')
+    ifile.seek(count)
+    entropy_value = 0
+    bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
+    for base in bases:
+        n_i = bases[base]
+        p_i = n_i / float(block)
+        entropy_i = p_i * (math.log(p_i, 2))
+        entropy_value += entropy_i
+    entropy = entropy_value * -1
+    ifile.seek(count)
+    b3block =  blake3(ifile.read(block)).hexdigest().upper()
+    if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
+        b3block = 'EMPTY'
+    return str(entropy)+'|'+b3block
 
 async def start():
     print('--------------------------------')
     print('GETBLOCKS v'+__version__)
     print('--------------------------------')
-    async with async_open('blocks-'+amiid+'.txt', 'w+') as b:
-        async with async_open(amiid+'.txt', 'w+') as f:
-            await f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name\n')
-            await b.write('ami|b3|size|entropy|block|offset\n')
-            root = PurePath(Path.cwd()).anchor
-            path = Path(root)
-            for p in Path(path).glob('*'):
-                if str(p) != '/proc':
-                    if p.is_file() == True:
-                        value = await parser(p)
-                        if value != None:
-                            await f.write(value)
-                            out = value.split('|')
-                            if out[6] != 'EMPTY' and out[6] != 'LARGE' and out[6] != '-':
-                                if p.is_file() == True:
-                                    block = 512
-                                    count = 0
-                                    location = 1
-                                    ifile = open(p,'rb')
-                                    while count <= int(out[3]):
-                                        ifile.seek(count)
-                                        entropy_value = 0
-                                        bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
-                                        for base in bases:
-                                            n_i = bases[base]
-                                            p_i = n_i / float(block)
-                                            entropy_i = p_i * (math.log(p_i, 2))
-                                            entropy_value += entropy_i
-                                        entropy = entropy_value * -1
-                                        ifile.seek(count)
-                                        b3block =  blake3(ifile.read(block)).hexdigest().upper()
-                                        if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
-                                            b3block = 'EMPTY'
-                                        await b.write(out[0]+'|'+out[6]+'|'+str(out[3])+'|'+str(entropy)+'|'+b3block+'|'+str(location)+'\n')
-                                        count = count + 512
-                                        location = location + 1
-                    else:
-                        for s in Path(p).rglob('*'):
+    async with async_open(amiid+'.txt', 'w+') as f:
+        await f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name|type|entropy|block|location\n')
+        root = PurePath(Path.cwd()).anchor
+        path = Path(root)
+        for p in Path(path).glob('*'):
+            if str(p) != '/proc':
+                if p.is_file() == True:
+                    value = await parser(p)
+                    if value != None:
+                        await f.write(value)
+                        out = value.split('|')
+                        count = 0
+                        location = 1
+                        while count <= int(out[3]):
+                            block = await sector(p,count)
+                            parse = block.split('|')
+                            await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                            count = count + 512
+                            location = location + 1
+                else:
+                    for s in Path(p).rglob('*'):
+                        if s.is_file() == True:
                             value = await parser(s)
                             if value != None:
                                 await f.write(value)
                                 out = value.split('|')
-                                if out[6] != 'EMPTY' and out[6] != 'LARGE' and out[6] != '-':
-                                    if p.is_file() == True:
-                                        block = 512
-                                        count = 0
-                                        location = 1
-                                        ifile = open(p,'rb')
-                                        while count <= int(out[3]):
-                                            ifile.seek(count)
-                                            entropy_value = 0
-                                            bases = collections.Counter([tmp_base for tmp_base in ifile.read(block)])
-                                            for base in bases:
-                                                n_i = bases[base]
-                                                p_i = n_i / float(block)
-                                                entropy_i = p_i * (math.log(p_i, 2))
-                                                entropy_value += entropy_i
-                                            entropy = entropy_value * -1
-                                            ifile.seek(count)
-                                            b3block =  blake3(ifile.read(block)).hexdigest().upper()
-                                            if b3block == 'AF1349B9F5F9A1A6A0404DEA36DCC9499BCB25C9ADC112B7CC9A93CAE41F3262':
-                                                b3block = 'EMPTY'
-                                            await b.write(out[0]+'|'+out[6]+'|'+str(out[3])+'|'+str(entropy)+'|'+b3block+'|'+str(location)+'\n')
-                                            count = count + 512
-                                            location = location + 1
+                                count = 0
+                                location = 1
+                                while count <= int(out[3]):
+                                    block = await sector(s,count)
+                                    parse = block.split('|')
+                                    await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                    count = count + 512
+                                    location = location + 1
 
 def main():
     asyncio.run(start())
-    ### META ###
     with open(amiid+'.txt', 'rb') as f_in:
         with gzip.open(amiid+'.txt.gz', 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-    ### BLOCKS ###
-    with open('blocks-'+amiid+'.txt', 'rb') as f_in:
-        with gzip.open('blocks-'+amiid+'.txt.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
     print('Completed!!')

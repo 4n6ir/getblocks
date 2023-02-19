@@ -1,7 +1,5 @@
 # getblocks
 
-### MatchMeta.Info
-
 0. ami
 1. path
 2. file
@@ -18,15 +16,10 @@
 13. md5name
 14. sha256name
 15. b3name
-
-### FileBlock.Info
-
-0. ami
-1. b3
-2. size
-3. entropy
-4. block
-5. offset
+16. type
+17. entropy
+18. block
+19. location
 
 ### Local Development
 

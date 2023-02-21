@@ -210,9 +210,12 @@ async def start():
                             count = 0
                             location = 1
                             while count <= int(out[3]):
-                                block = await sector(p,count)
-                                parse = block.split('|')
-                                await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                try:
+                                    block = await sector(p,count)
+                                    parse = block.split('|')
+                                    await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                except:
+                                    pass
                                 count = count + 512
                                 location = location + 1
                 else:
@@ -226,9 +229,12 @@ async def start():
                                     count = 0
                                     location = 1
                                     while count <= int(out[3]):
-                                        block = await sector(s,count)
-                                        parse = block.split('|')
-                                        await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                        try:
+                                            block = await sector(s,count)
+                                            parse = block.split('|')
+                                            await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                        except:
+                                            pass
                                         count = count + 512
                                         location = location + 1
 

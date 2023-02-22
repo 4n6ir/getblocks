@@ -201,7 +201,7 @@ async def start():
         path = Path(root)
         for p in Path(path).glob('*'):
             if str(p) != '/proc':
-                if p.is_file() == True:
+                if p.is_file() == True and not str(p).endswith(amiid+'.txt'):
                     value = await parser(p)
                     if value != None:
                         await f.write(value)
@@ -220,7 +220,7 @@ async def start():
                                 location = location + 1
                 else:
                     for s in Path(p).rglob('*'):
-                        if s.is_file() == True:
+                        if s.is_file() == True and not str(s).endswith(amiid+'.txt'):
                             value = await parser(s)
                             if value != None:
                                 await f.write(value)

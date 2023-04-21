@@ -1,5 +1,15 @@
 # getblocks
 
+### Installation
+
+```
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source "$HOME/.cargo/env"
+pip3 install getblocks --upgrade
+```
+
+### Captured Data
+
 0. ami
 1. path
 2. file

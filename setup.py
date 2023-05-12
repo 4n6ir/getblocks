@@ -21,7 +21,7 @@ setup(
     install_requires = [
         "aiofile",
         "blake3",
-        "requests"
+        "requests==2.29.0"
     ],
     zip_safe = False,
     entry_points = {

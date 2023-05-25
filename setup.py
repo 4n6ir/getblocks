@@ -8,7 +8,7 @@ with open("README.md", "r") as f:
 setup(
     name = "getblocks",
     version = __version__,
-    description = "Down to the sector detail!",
+    description = "Down to the smallest sector detail!",
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = "https://github.com/jblukach/getblocks",

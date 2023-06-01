@@ -19,9 +19,8 @@ setup(
         "getblocks"
     ],
     install_requires = [
-        "aiofile",
         "blake3",
-        "requests==2.29.0"
+        "requests"
     ],
     zip_safe = False,
     entry_points = {

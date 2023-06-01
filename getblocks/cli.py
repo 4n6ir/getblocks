@@ -1,33 +1,21 @@
-import asyncio
 import collections
+import concurrent.futures
 import gzip
 import hashlib
 import math
 import requests
 import shutil
-import warnings
-from aiofile import async_open
 from blake3 import blake3
 from getblocks import __version__
 from pathlib import Path, PurePath
 
-BLOCKSIZE = 65536
-warnings.filterwarnings('ignore')
+def hasher(fname):
 
-### Instance Metadata Service Version 2 (IMDSv2) ###
-
-headers = {'X-aws-ec2-metadata-token-ttl-seconds': '30'}
-token = requests.put('http://169.254.169.254/latest/api/token', headers=headers)
-
-headers = {'X-aws-ec2-metadata-token': token.text}
-r = requests.get('http://169.254.169.254/latest/meta-data/ami-id', headers=headers)
-amiid = r.text
-
-async def hasher(fname):
     try:
         md5_file = ''
         sha256_file = ''
         b3_file = ''
+        BLOCKSIZE = 65536
         md5_hasher = hashlib.md5()
         sha256_hasher = hashlib.sha256()
         b3_hasher = blake3()
@@ -55,7 +43,8 @@ async def hasher(fname):
     hashes = md5_file+'|'+sha256_file+'|'+b3_file
     return hashes
 
-async def matchmeta(meta):
+def matchmeta(meta):
+
     md5_hasher = hashlib.md5()
     sha256_hasher = hashlib.sha256()
     b3_hasher = blake3()
@@ -68,56 +57,56 @@ async def matchmeta(meta):
     meta = md5_meta+'|'+sha256_meta+'|'+b3_meta
     return meta
 
-async def normalizepath(path):
-    if path[:1] == '/':					    ### LINUX
+def normalizepath(path):
+
+    if path[:1] == '/':
         out = path.split('/')
         try:
-            if out[1] == 'home':
+            if out[1] == 'home':            ### LINUX
                 out[2] = 'user'
                 path = '/'.join(out)
+            elif out[1] == 'Users':         ### APPLE
+                if out[2] != 'Shared':
+                    out[2] = 'user'
+                    path = '/'.join(out)
         except:
             pass
     elif path[1] == ':': 				    ### WINDOWS
-        new = list(path)
-        new[0] = 'C'
-        path = (''.join(new))
         out = path.split('\\')
         try:
             if out[1] == 'Users' or out[1] == 'Documents and Settings':
                 if out[2] != 'Default' and out[2] != 'Public' and out[2] != 'All Users' and out[2] != 'Default User':
+                    out[0] = 'C:'
                     out[2] = 'Administrator'
                     path = '\\'.join(out)
         except:
             pass
     return path
 
-async def parsefilename(filename):
-    if filename[:1] == '/':					### LINUX
+def parsefilename(filename):
+
+    if filename[:1] == '/':					### UNIX
         out = filename.split('/')
         count = len(out) - 1
     elif filename[1] == ':': 				### WINDOWS
-        new = list(path)
-        new[0] = 'C'
-        path = (''.join(new))
-        out = path.split('\\')
+        out = filename.split('\\')
         count = len(out) - 1
     return out[count]
 
-async def parseonlypath(onlypath):
-    if onlypath[:1] == '/':					### LINUX
+def parseonlypath(onlypath):
+
+    if onlypath[:1] == '/':					### UNIX
         out = onlypath.split('/')
         del out[-1]
         onlypath = '/'.join(out)
     elif onlypath[1] == ':': 				### WINDOWS
-        new = list(path)
-        new[0] = 'C'
-        path = (''.join(new))
-        out = path.split('\\')
+        out = onlypath.split('\\')
         del out[-1]
         onlypath = '\\'.join(out)
     return onlypath
 
-async def parser(p):
+def parser(p, amiid):
+
     try:
         size =  p.stat().st_size		
     except: 
@@ -132,25 +121,25 @@ async def parser(p):
         sha256_file = 'LARGE'
         b3_file = 'LARGE'
     else:
-        hashes = await hasher(str(p))
+        hashes = hasher(str(p))
         out = hashes.split('|')
         md5_file = out[0]
         sha256_file = out[1]
         b3_file = out[2]
-    fullpath = await normalizepath(str(p))
-    meta = await matchmeta(fullpath)
+    fullpath = normalizepath(str(p))
+    meta = matchmeta(fullpath)
     out = meta.split('|')
     md5_path = out[0]
     sha256_path = out[1]
     b3_path = out[2]
-    directory = await parseonlypath(fullpath)
-    meta = await matchmeta(directory)
+    directory = parseonlypath(fullpath)
+    meta = matchmeta(directory)
     out = meta.split('|')
     md5_dir = out[0]
     sha256_dir = out[1]
     b3_dir = out[2]
-    filename = await parsefilename(fullpath)
-    meta = await matchmeta(filename)
+    filename = parsefilename(fullpath)
+    meta = matchmeta(filename)
     out = meta.split('|')
     md5_name = out[0]
     sha256_name = out[1]
@@ -173,7 +162,8 @@ async def parser(p):
         str(b3_name)+'|FILE|-|-|-\n'
     return value
 
-async def sector(p,count):
+def sector(p,count):
+
     block = 512
     ifile = open(p,'rb')
     ifile.seek(count)
@@ -191,29 +181,27 @@ async def sector(p,count):
         b3block = 'EMPTY'
     return str(entropy)+'|'+b3block
 
-async def start():
-    print('--------------------------------')
-    print('GETBLOCKS v'+__version__)
-    print('--------------------------------')
-    async with async_open(amiid+'.txt', 'w+') as f:
-        await f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name|type|entropy|block|location\n')
+def start(amiid):
+
+    with open(amiid+'.txt', 'w+') as f:
+        f.write('ami|path|file|size|md5|sha256|b3|md5path|sha256path|b3path|md5dir|sha256dir|b3dir|md5name|sha256name|b3name|type|entropy|block|location\n')
         root = PurePath(Path.cwd()).anchor
         path = Path(root)
         for p in Path(path).glob('*'):
             if str(p) != '/proc':
                 if p.is_file() == True and not str(p).endswith(amiid+'.txt'):
-                    value = await parser(p)
+                    value = parser(p, amiid)
                     if value != None:
-                        await f.write(value)
+                        f.write(value)
                         out = value.split('|')
                         if out[6] != 'LARGE' and out[6] != 'EMPTY' and out[6] != '-':
                             count = 0
                             location = 1
                             while count <= int(out[3]):
                                 try:
-                                    block = await sector(p,count)
+                                    block = sector(p,count)
                                     parse = block.split('|')
-                                    await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                    f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
                                 except:
                                     pass
                                 count = count + 512
@@ -221,26 +209,43 @@ async def start():
                 else:
                     for s in Path(p).rglob('*'):
                         if s.is_file() == True and not str(s).endswith(amiid+'.txt'):
-                            value = await parser(s)
+                            value = parser(s, amiid)
                             if value != None:
-                                await f.write(value)
+                                f.write(value)
                                 out = value.split('|')
                                 if out[6] != 'LARGE' and out[6] != 'EMPTY' and out[6] != '-':
                                     count = 0
                                     location = 1
                                     while count <= int(out[3]):
                                         try:
-                                            block = await sector(s,count)
+                                            block = sector(s,count)
                                             parse = block.split('|')
-                                            await f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
+                                            f.write(str(out[0])+'|-|-|'+str(out[3])+'|-|-|'+str(out[6])+'|-|-|-|-|-|-|-|-|-|SECTOR|'+str(parse[0])+'|'+str(parse[1])+'|'+str(location)+'\n')
                                         except:
                                             pass
                                         count = count + 512
                                         location = location + 1
 
 def main():
-    asyncio.run(start())
+
+    print('GETBLOCKS v'+__version__)
+
+    ### Instance Metadata Service Version 2 (IMDSv2) ###
+
+    headers = {'X-aws-ec2-metadata-token-ttl-seconds': '30'}
+    token = requests.put('http://169.254.169.254/latest/api/token', headers=headers)
+
+    headers = {'X-aws-ec2-metadata-token': token.text}
+    r = requests.get('http://169.254.169.254/latest/meta-data/ami-id', headers=headers)
+    amiid = r.text
+
+    print('  '+amiid)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(start, amiid)
+
     with open(amiid+'.txt', 'rb') as f_in:
         with gzip.open(amiid+'.txt.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-    print('Completed!!')
+
+    print('    Done!!')

@@ -1,14 +1,42 @@
 # getblocks
 
-### Installation
+### NORMALIZATION
 
-```
-curl https://sh.rustup.rs -sSf | sh -s -- -y
-source "$HOME/.cargo/env"
-pip3 install getblocks --upgrade
+Clean data is mission-critical for collecting operating system artifacts, especially with user home directories.
+
+### APPLE, LINUX, & UNIX
+
+```python
+    if path[:1] == '/':
+        out = path.split('/')
+        try:
+            if out[1] == 'home':
+                out[2] = 'user'
+                path = '/'.join(out)
+            elif out[1] == 'Users':
+                if out[2] != 'Shared':
+                    out[2] = 'user'
+                    path = '/'.join(out)
+        except:
+            pass
 ```
 
-### Captured Data
+### MICROSOFT WINDOWS
+
+```python
+    elif path[1] == ':':
+        out = path.split('\\')
+        try:
+            if out[1] == 'Users' or out[1] == 'Documents and Settings':
+                if out[2] != 'Default' and out[2] != 'Public' and out[2] != 'All Users' and out[2] != 'Default User':
+                    out[0] = 'C:'
+                    out[2] = 'Administrator'
+                    path = '\\'.join(out)
+        except:
+            pass
+```
+
+### CAPTURED DATA
 
 0. ami
 1. path
@@ -31,7 +59,20 @@ pip3 install getblocks --upgrade
 18. block
 19. location
 
-### Local Development
+### REQUIREMENTS
+
+```
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+
+### INSTALLATION
+
+```
+pip install getblocks
+```
+
+### DEVELOPMENT
 
 ```
 python setup.py install --user

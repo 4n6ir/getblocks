@@ -20,7 +20,7 @@ setup(
     ],
     install_requires = [
         "blake3",
-        "requests==2.29.0"
+        "requests"
     ],
     zip_safe = False,
     entry_points = {

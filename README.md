@@ -77,3 +77,7 @@ pip install getblocks
 ```
 python setup.py install --user
 ```
+
+### META INFORMATION
+
+![Meta Information](images/metainfo.png)

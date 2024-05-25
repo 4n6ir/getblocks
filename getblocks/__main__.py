@@ -1,6 +1,6 @@
 import sys
 
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from getblocks.cli import main
     main()
 else:

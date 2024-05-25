@@ -11,16 +11,16 @@ setup(
     description = "Down to the smallest sector detail!",
     long_description = long_description,
     long_description_content_type = "text/markdown",
-    url = "https://github.com/jblukach/getblocks",
+    url = "https://github.com/4n6ir/getblocks",
     author = "John Lukach",
-    author_email = "hello@lukach.io",
+    author_email = "hello@4n6ir.com",
     license = "Apache-2.0",
     packages = [
         "getblocks"
     ],
     install_requires = [
         "blake3",
-        "requests==2.29.0"
+        "requests"
     ],
     zip_safe = False,
     entry_points = {
@@ -28,5 +28,5 @@ setup(
             "getblocks=getblocks.cli:main"
         ],
     },
-    python_requires = ">=3.7",
+    python_requires = ">=3.8",
 )

@@ -3,6 +3,7 @@ import concurrent.futures
 import gzip
 import hashlib
 import math
+import platform
 import requests
 import shutil
 from blake3 import blake3
@@ -232,12 +233,21 @@ def main():
 
     ### Instance Metadata Service Version 2 (IMDSv2) ###
 
-    headers = {'X-aws-ec2-metadata-token-ttl-seconds': '30'}
-    token = requests.put('http://169.254.169.254/latest/api/token', headers=headers)
+    try:
 
-    headers = {'X-aws-ec2-metadata-token': token.text}
-    r = requests.get('http://169.254.169.254/latest/meta-data/ami-id', headers=headers)
-    amiid = r.text
+        headers = {'X-aws-ec2-metadata-token-ttl-seconds': '30'}
+        token = requests.put('http://169.254.169.254/latest/api/token', headers=headers)
+
+        headers = {'X-aws-ec2-metadata-token': token.text}
+        r = requests.get('http://169.254.169.254/latest/meta-data/ami-id', headers=headers)
+        amiid = r.text
+
+    except:
+
+        host = platform.node()
+        amiid = 'ami-'+str(host.lower())
+
+        pass
 
     print('  '+amiid)
 

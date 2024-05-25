@@ -6,7 +6,6 @@ import math
 import platform
 import requests
 import shutil
-import time
 from blake3 import blake3
 from getblocks import __version__
 from pathlib import Path, PurePath
@@ -259,7 +258,6 @@ def main():
     with open(amiid+'.txt', 'rb') as f_in:
         with gzip.open(amiid+'.txt.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-            time.sleep(60)
         f_out.close()
     f_in.close()
 

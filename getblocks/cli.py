@@ -256,10 +256,11 @@ def main():
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.submit(start, amiid)
 
-    time.sleep(30)
-
     with open(amiid+'.txt', 'rb') as f_in:
         with gzip.open(amiid+'.txt.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+            time.sleep(60)
+        f_out.close()
+    f_in.close()
 
     print('    Done!!')

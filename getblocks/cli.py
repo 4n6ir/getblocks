@@ -6,6 +6,7 @@ import math
 import platform
 import requests
 import shutil
+import time
 from blake3 import blake3
 from getblocks import __version__
 from pathlib import Path, PurePath
@@ -226,6 +227,7 @@ def start(amiid):
                                             pass
                                         count = count + 512
                                         location = location + 1
+    f.close()
 
 def main():
 
@@ -253,6 +255,8 @@ def main():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.submit(start, amiid)
+
+    time.sleep(30)
 
     with open(amiid+'.txt', 'rb') as f_in:
         with gzip.open(amiid+'.txt.gz', 'wb') as f_out:
